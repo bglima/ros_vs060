@@ -1,0 +1,147 @@
+##########################################################
+############ Buildando o FCL e o OpenRAVE ################
+##########################################################
+
+# Instalando dependências
+sudo apt-get update
+
+sudo apt-get install ipython python-dev python-numpy python-pip python-scipy python-sympy build-essential cmake doxygen g++ git octave python-h5py qt5-default minizip
+
+sudo apt-get install ann-tools cmake libann-dev libassimp-dev libavcodec-dev libavformat-dev libboost-python-dev libboost-all-dev libccd-dev libcollada-dom2.4-dp-dev libeigen3-dev libflann-dev liblapack-dev liblog4cxx-dev libminizip-dev liboctave-dev libode-dev libpcre3-dev libqhull-dev libsoqt-dev-common libsoqt4-dev libswscale-dev libtinyxml-dev libxml2-dev
+
+# Buildando e instalando FCL - The Flexible Collision Library
+mkdir -p ~/git; cd ~/git
+git clone https://github.com/flexible-collision-library/fcl
+cd fcl; git checkout 0.5.0
+mkdir build; cd build
+cmake ..
+make -j `nproc` # Caso o computador trave, tente utilizar apenas make.
+sudo make install 
+
+# Para o IKFast funcionar como esperado, faça o downgrade do Sympy para a versão 0.7.1
+pip install --upgrade --user sympy==0.7.1
+
+# Buildando e instalando o OpenRAVE
+cd ~/git
+git clone https://github.com/rdiankov/openrave.git --branch master
+cd openrave
+mkdir build; cd build
+cmake -DODE_USE_MULTITHREAD=ON -DOPENRAVE_PLUGIN_MOBYRAVE=OFF -DOPT_QTOSG_VIEWER=OFF ..
+make -j `nproc`
+sudo make install
+
+# Para testar o ambiente OpenRAVE, utilize o comando:
+openrave data/lab1.env.xml
+
+##########################################################
+################# Instalando o ROS #######################
+##########################################################
+
+# Configure seu computador para aceitar softwares de package.ros.org
+# Isso é mostrado nos passos 1.2 e 1.3 de http://wiki.ros.org/kinetic/Installation/Ubuntu
+
+# Feito isso, instale o ros:
+sudo apt-get update
+sudo apt-get install python-wstool ros-kinetic-ros-base
+
+# Atualize as dependências do mesmo
+sudo rosdep init
+rosdep update
+source /opt/ros/kinetic/setup.bash
+
+# Clonando o repositório do curso 
+mkdir -p ~/catkin_ws/src; cd ~/catkin_ws/src
+git clone https://github.com/quangounet/osr_course_pkgs.git
+
+# Criando o ambiente catkin
+cd ~/catkin_ws/src
+catkin_init_workspace
+
+# Buildando o ambiente
+cd ~/catkin_ws/
+catkin_make	# Vai dar um erro 'Invoking "cmake" failed'. Pode prosseguir normalmente
+source ~/catkin_ws/devel/setup.bash # Só funciona no terminal.
+
+# Para não precisar dar o source em todo novo terminal aberto, execute:
+echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+
+##########################################################
+######## Instalando do VS060 da OSR Robotics #############
+##########################################################
+
+# Buildando os pacotes clonados do OS Robotics
+cd ~/catkin_ws/src
+wstool init .
+wstool merge osr_course_pkgs/dependencies.rosinstall
+wstool update
+
+# Instalando quaisquer dependencias desses pacotes
+rosdep update
+rosdep install --from-paths . --ignore-src -y
+
+# Compilando o seu ROS Workspace
+cd ~/catkin_ws && catkin_make install
+
+# Instalando dependências externas, não disponíveis na comunidade ROS
+sudo apt-get install blender openscad python-rtree
+sudo -H pip install control sklearn trimesh
+
+# Testando a instalação no RViz
+roslaunch osr_description visualize_robot_gripper.launch
+# Testando a instalação no Gazebo. Caso a simulação fique com a tela preta, significa que está baixando pacotes
+# Espere por volta de 5 minutos e reinicie a instalação.
+roslaunch osr_gazebo robotic_setup.launch
+
+# Para maiores informações: http://osrobotics.org/pages/introduction_osr.html
+
+##########################################################
+########### Instalando os pacotes do Kobuki ##############
+##########################################################
+
+# Instalando os drivers
+sudo apt-get install ros-kinetic-kobuki ros-kinetic-kobuki-core ros-kinetic-kobuki-gazebo
+ 
+# Testando a instalação do Kobuki Playground
+roslaunch kobuki_gazebo kobuki_playground.launch 
+# Script para comandar pelo teclado. Em um novo terminal, execute:
+roslaunch kobuki_keyop keyop.launch --screen
+
+
+##########################################################
+######### Instalando os pacotes do TurtleBot #############
+##########################################################
+
+# Instalando os drivers
+sudo apt-get install ros-kinetic-turtlebot ros-kinetic-turtlebot-apps ros-kinetic-turtlebot-interactions ros-kinetic-turtlebot-simulator ros-kinetic-kobuki-ftdi ros-kinetic-ar-track-alvar-msgs ros-kinetic-turtlebot-gazebo
+
+# Atualizando o ambiente do ROS para enxergar as novas instalações
+source /opt/ros/kinetic/setup.bash 
+
+# Testando a simulação no TurtleBot World
+roslaunch turtlebot_gazebo turtlebot_world.launch
+
+
+######################################################
+########### Instalação do Moveit do Denso ############
+######################################################
+
+# Estes passos devem ser executados após finalizado o 1o tutorial.
+# Instale as dependências
+sudo apt-get install ros-kinetic-checkerboard-detector ros-kinetic-control-msgs ros-kinetic-denso-ros-control ros-kinetic-vs060-moveit-config ros-kinetic-moveit-ros-visualization ros-kinetic-moveit ros-kinetic-denso 
+
+# Atualize o workspace
+rosdep install vs060
+rosdep update
+source /opt/ros/kinetic/setup.bash
+
+# Testando o MoveIt numa cena com 2 obstáculos
+roslaunch denso_launch denso_vs060_moveit_demo_simulation.launch 
+# Testando o MoveIt numa gaiola
+roslaunch vs060_moveit_config demo_simulation_cage.launch
+
+######################################################
+###################### By BG #########################
+#################### 20/12/2017 ######################
+######################################################
+
+
