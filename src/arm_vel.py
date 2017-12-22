@@ -1,39 +1,38 @@
 #!/usr/bin/env python
-import rospy
+import sys, rospy, tf, moveit_commander, random
+import std_msgs.msg
+import actionlib_msgs.msg
+from mousepos import mouseFromCenter
 from control_msgs.msg import FollowJointTrajectoryActionGoal
-from geometry_msgs.msg import Twist
-from mousepos import mousepos
+from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
+from moveit_commander import MoveGroupCommander, conversions
+from tf.transformations import quaternion_from_euler
+from math import pi
 
 # Init a new node
-rospy.init_node('bruno_turtle_commander')
+rospy.init_node('bruno_arm_commander')
+arm = MoveGroupCommander("manipulator")
 
-# Create a publisher which will send messages
-pub = rospy.Publisher('/arm_controller/position_trajectory_controller/follow_joint_trajectory/goal', Twist)
+# Use rospy.Rate for frequency. Use rospy.Duration for period
+rate = rospy.Rate(1)
 
-# Create a message of type geometry_msgs/Twist, which has:
-#
-# geometry_msgs/Vector3 linear
-#  float64 x
-#  float64 y
-#  float64 z
-#geometry_msgs/Vector3 angular
-#  float64 x
-#  float64 y
-#  float64 z
-state = FollowJointTrajectoryActionGoal()
 
-rate = rospy.Rate(5)  # Create a frequency rate for message to be published
-
-# Main loop
 while not rospy.is_shutdown():
     mouse_x, mouse_y = mouseFromCenter()
-    state.angular.z, state.linear.x = normAndCenter( mouse_x, mouse_y )
     
-    if abs( state.linear.x ) < maxval[0] * 0.05:
-        state.linear.x = 0
-    if abs( state.angular.z ) < maxval[1] * 0.05:
-        state.angular.z = 0
-        
-    pub.publish(state)
-    rate.sleep()
+    point = Point( 0.4 + mouse_y, \
+                   0.0 + mouse_x, \
+                   0.4 + random.uniform(-0.05, 0.05) )
+    
+    orient = Quaternion(  0, 0.7071,  0.7071, 0)                   
+    
+    pose = PoseStamped( header = rospy.Header(stamp = rospy.Time.now(), frame_id = '/BASE'), \
+                        pose = Pose(position = point, orientation = orient) \
+                      )
+                        
+    print ' [SYS] Executing current pose: \n', pose, '\n'
+    arm.set_pose_target(pose)
+    arm.go(True)
+    rate.sleep()    
 
+moveit_commander.roscpp_shutdown()

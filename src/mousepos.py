@@ -14,7 +14,7 @@ from Xlib import display
 
 display_dim = [2560.0, 1080.0] # Display dimensions X and Y
 display_half = [ x * 0.5 for x in display_dim ] # Half of display dimensions
-max_val = [15.0, 10.0] # Max value for linear and angular velocity 
+max_val = [0.4, 0.2] # Max value for linear and angular velocity 
 
 def mousePos():
     """mousepos() --> (x, y) get the mouse coordinates on the screen (linux, Xlib)."""
@@ -23,7 +23,7 @@ def mousePos():
     
 # Functions that transforms mouse coordinates from display to centered maxval space
 def mouseFromCenter():
-    pox_x, pos_y = mousePos()
+    pos_x, pos_y = mousePos()
     pos = [pos_x, pos_y]    
     tf = [ -max_val[i] * (pos[i] - display_half[i]) / display_half[i] for i in range(2) ]
     return tf[0], tf[1]
